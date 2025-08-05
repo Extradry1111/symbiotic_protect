@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Symbiotic Defender</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #161616, #2A2A2A);
+      overflow: hidden;
+      font-family: 'Orbitron', sans-serif;
+      user-select: none;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 2.5em;
+      color: #C0FD5C;
+      text-shadow: 0 0 10px #3EFFE8, 0 0 20px #FF7E47;
+    }
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 85vh;
+      cursor: crosshair;
+      background: radial-gradient(circle at center, #161616 0%, #0a0a0a 100%);
+      animation: subtleBackground 10s infinite alternate ease-in-out;
+      overflow: hidden;
+    }
+    @keyframes subtleBackground {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 100%; }
+    }
+    .target {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      transition: transform 0.3s ease, filter 0.3s ease;
+      filter: drop-shadow(0 0 6px #FF46D6);
+      user-select: none;
+    }
+    .target:hover {
+      transform: scale(1.2) rotate(5deg);
+      filter: drop-shadow(0 0 12px #C0FD5C);
+    }
+    #scoreboard, #timer {
+      position: absolute;
+      top: 10px;
+      font-size: 1.2em;
+      color: #C0FD5C;
+      z-index: 100;
+      text-shadow: 0 0 6px #3EFFE8;
+      user-select: none;
+    }
+    #scoreboard {
+      right: 20px;
+    }
+    #timer {
+      left: 20px;
+    }
+    #lives {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 100;
+    }
+    .life {
+      width: 24px;
+      height: 24px;
+      background: #4CAF50;
+      mask: url('data:image/svg+xml;utf8,<svg fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>') no-repeat center / contain;
+      filter: drop-shadow(0 0 5px #2eb82e);
+    }
+    #startBtn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 15px 30px;
+      background-color: #8D57FF;
+      color: #fff;
+      border: none;
+      font-size: 1.2em;
+      cursor: pointer;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #8D57FF;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      z-index: 100;
+      user-select: none;
+    }
+    #startBtn:hover {
+      background-color: #FF46D6;
+      box-shadow: 0 0 15px #FF46D6;
+    }
+    /* Modal */
+    #modalOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #modalOverlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    #modalContent {
+      background: #1a1a1a;
+      padding: 30px 40px;
+      border-radius: 12px;
+      text-align: center;
+      color: #C0FD5C;
+      box-shadow: 0 0 20px #FF46D6;
+      user-select: none;
+      max-width: 320px;
+      font-family: 'Orbitron', monospace;
+    }
+    #modalContent h2 {
+      margin-bottom: 20px;
+      font-size: 1.8em;
+      text-shadow: 0 0 10px #3EFFE8, 0 0 20px #FF7E47;
+    }
+    #modalContent p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+    }
+    #modalContent button {
+      background-color: #8D57FF;
+      border: none;
+      color: white;
+      padding: 12px 25px;
+      margin: 0 10px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #8D57FF;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    #modalContent button:hover {
+      background-color: #FF46D6;
+      box-shadow: 0 0 15px #FF46D6;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Protect the Symbiotic Network</h1>
+
+  <div id="game">
+    <div id="scoreboard">Score: 0</div>
+    <div id="timer">Time: 0.0s</div>
+    <div id="lives"></div>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalOverlay">
+    <div id="modalContent">
+      <h2>Game Over</h2>
+      <p id="finalResult"></p>
+      <button id="restartBtn">Start Game</button>
+      <button id="exitBtn">Exit to Menu</button>
+    </div>
+  </div>
+
+  <!-- Sounds -->
+  <audio id="clickSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_2f623fffcf.mp3" preload="auto"></audio>
+  <audio id="bgMusic" src="https://cdn.pixabay.com/audio/2023/05/23/audio_d317f57898.mp3" loop></audio>
+
+  <script>
+    const gameArea = document.getElementById("game");
+    const startBtn = document.getElementById("startBtn");
+    const scoreboard = document.getElementById("scoreboard");
+    const timerDisplay = document.getElementById("timer");
+    const livesContainer = document.getElementById("lives");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const finalResult = document.getElementById("finalResult");
+    const restartBtn = document.getElementById("restartBtn");
+    const exitBtn = document.getElementById("exitBtn");
+    const clickSound = document.getElementById("clickSound");
+    const bgMusic = document.getElementById("bgMusic");
+
+    let score = 0;
+    let gameInterval;
+    let gameTimer;
+    let timeElapsed = 0;
+    let spawnRate = 2000;
+    let lives = 10;
+    let activeTargets = [];
+    let maxTargets = 5; // start easy
+
+    const icons = [
+      "icons/secure.png",
+      "icons/shared.png",
+      "icons/decentralized.png",
+      "icons/aligned.png"
+    ];
+
+    function createLifeIcons() {
+      livesContainer.innerHTML = "";
+      for (let i = 0; i < lives; i++) {
+        const life = document.createElement("div");
+        life.classList.add("life");
+        livesContainer.appendChild(life);
+      }
+    }
+
+    function updateLivesDisplay() {
+      const lifeDivs = livesContainer.querySelectorAll(".life");
+      lifeDivs.forEach((life, index) => {
+        life.style.visibility = index < lives ? "visible" : "hidden";
+      });
+    }
+
+    function getRandomPosition() {
+      const padding = 70;
+      const x = Math.random() * (window.innerWidth - padding);
+      const y = Math.random() * (gameArea.clientHeight - padding);
+      return { x, y };
+    }
+
+    function spawnTarget() {
+      if(lives <= 0) return;
+
+      if(activeTargets.length >= maxTargets) return;
+
+      const img = document.createElement("img");
+      img.src = icons[Math.floor(Math.random() * icons.length)];
+      img.classList.add("target");
+
+      const { x, y } = getRandomPosition();
+      img.style.left = `${x}px`;
+      img.style.top = `${y}px`;
+
+      img.onclick = () => {
+        score++;
+        scoreboard.textContent = `Score: ${score}`;
+        clickSound.currentTime = 0;
+        clickSound.play();
+
+        gameArea.removeChild(img);
+        activeTargets.splice(activeTargets.indexOf(img), 1);
+      };
+
+      gameArea.appendChild(img);
+      activeTargets.push(img);
+
+      setTimeout(() => {
+        if (activeTargets.includes(img)) {
+          gameArea.removeChild(img);
+          activeTargets.splice(activeTargets.indexOf(img), 1);
+          lives--;
+          updateLivesDisplay();
+          if(lives <= 0) endGame();
+        }
+      }, 3000);
+    }
+
+    function updateGameTime() {
+      timeElapsed += 0.1;
+      timerDisplay.textContent = `Time: ${timeElapsed.toFixed(1)}s`;
+
+      // Every 20 seconds increase difficulty
+      if (Math.floor(timeElapsed) % 20 === 0) {
+        if(spawnRate > 600) {
+          spawnRate -= 200;  // faster spawn
+          clearInterval(gameInterval);
+          gameInterval = setInterval(spawnTarget, spawnRate);
+        }
+        if(maxTargets < 15) {
+          maxTargets += 2;  // more targets max
+        }
+      }
+    }
+
+    function startGame() {
+      score = 0;
+      timeElapsed = 0;
+      spawnRate = 2000;
+      lives = 10;
+      maxTargets = 5;
+      scoreboard.textContent = "Score: 0";
+      timerDisplay.textContent = "Time: 0.0s";
+      startBtn.style.display = "none";
+      modalOverlay.classList.remove("active");
+      createLifeIcons();
+      updateLivesDisplay();
+
+      clickSound.volume = 0.4;
+      bgMusic.volume = 0.25;
+      bgMusic.play();
+
+      gameInterval = setInterval(spawnTarget, spawnRate);
+      gameTimer = setInterval(updateGameTime, 100);
+    }
+
+    function endGame() {
+      clearInterval(gameInterval);
+      clearInterval(gameTimer);
+      bgMusic.pause();
+
+      activeTargets.forEach(t => t.remove());
+      activeTargets = [];
+
+      finalResult.innerHTML = `Your score: <strong>${score}</strong><br>in <strong>${timeElapsed.toFixed(1)}</strong> seconds`;
+      modalOverlay.classList.add("active");
+      startBtn.style.display = "none";
+    }
+
+    restartBtn.addEventListener("click", () => {
+      modalOverlay.classList.remove("active");
+      startGame();
+    });
+
+    exitBtn.addEventListener("click", () => {
+      modalOverlay.classList.remove("active");
+      startBtn.style.display = "block";
+      scoreboard.textContent = "Score: 0";
+      timerDisplay.textContent = "Time: 0.0s";
+      livesContainer.innerHTML = "";
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+      activeTargets.forEach(t => t.remove());
+      activeTargets = [];
+    });
+
+    startBtn.addEventListener("click", startGame);
+  </script>
+</body>
+</html>
+    
